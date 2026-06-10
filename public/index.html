@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b0d12">
+<title>ContentFlow</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="brand"><span class="logo">▶</span> ContentFlow</div>
+  <nav>
+    <button class="tab active" data-tab="queue">Queue <span class="badge" id="badge-queue">0</span></button>
+    <button class="tab" data-tab="studio">Studio <span class="badge" id="badge-studio">0</span></button>
+    <button class="tab" data-tab="scheduled">Scheduled <span class="badge" id="badge-scheduled">0</span></button>
+  </nav>
+</header>
+
+<main>
+  <!-- ============ QUEUE ============ -->
+  <section id="tab-queue" class="tabpane active">
+    <form id="add-form" autocomplete="off">
+      <input id="add-title" placeholder="Title — what to read / watch" required>
+      <input id="add-url" placeholder="Link (optional)" inputmode="url">
+      <div class="add-row2">
+        <select id="add-type">
+          <option value="article">📄 Article</option>
+          <option value="video">🎬 Video</option>
+          <option value="paper">🔬 Paper</option>
+          <option value="thread">🧵 Thread</option>
+          <option value="podcast">🎙 Podcast</option>
+          <option value="book">📚 Book</option>
+        </select>
+        <select id="add-priority">
+          <option value="normal">Normal</option>
+          <option value="high">🔥 High</option>
+          <option value="low">Low</option>
+        </select>
+        <input id="add-tags" placeholder="tags, comma, separated">
+        <button type="submit" class="btn primary">+ Add</button>
+      </div>
+    </form>
+
+    <div class="filters">
+      <input id="search" placeholder="🔍 Search queue…">
+      <div class="chips" id="type-chips">
+        <button class="chip active" data-type="">All</button>
+        <button class="chip" data-type="article">📄</button>
+        <button class="chip" data-type="video">🎬</button>
+        <button class="chip" data-type="paper">🔬</button>
+        <button class="chip" data-type="thread">🧵</button>
+        <button class="chip" data-type="podcast">🎙</button>
+        <button class="chip" data-type="book">📚</button>
+      </div>
+    </div>
+
+    <div id="queue-grid" class="grid"></div>
+    <p id="queue-empty" class="empty hidden">Queue empty. Add something to consume 🍿</p>
+  </section>
+
+  <!-- ============ STUDIO ============ -->
+  <section id="tab-studio" class="tabpane">
+    <div id="reminders"></div>
+    <div id="studio-list" class="grid"></div>
+    <p id="studio-empty" class="empty hidden">Nothing here yet. Finish something in the Queue — it lands here for writing.</p>
+  </section>
+
+  <!-- ============ SCHEDULED ============ -->
+  <section id="tab-scheduled" class="tabpane">
+    <div id="scheduled-list"></div>
+    <p id="scheduled-empty" class="empty hidden">No posts scheduled. Draft something in the Studio first.</p>
+  </section>
+</main>
+
+<!-- ============ EDITOR MODAL ============ -->
+<div id="editor" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div>
+        <h2 id="ed-title"></h2>
+        <div class="muted" id="ed-meta"></div>
+      </div>
+      <button id="ed-close" class="btn ghost">✕</button>
+    </div>
+
+    <label class="field-label">1 · Your thoughts <span class="muted">— raw, messy is fine</span></label>
+    <textarea id="ed-thoughts" rows="4" placeholder="What stuck with you? Surprising bits? Disagreements? One idea per line works great."></textarea>
+
+    <div class="gen-row">
+      <label class="field-label" style="margin:0">2 · Connector lines</label>
+      <select id="ed-angle">
+        <option value="insight">💡 Insight angle</option>
+        <option value="contrarian">⚡ Contrarian angle</option>
+        <option value="story">📖 Story angle</option>
+        <option value="question">❓ Question angle</option>
+        <option value="listicle">🔢 Listicle angle</option>
+      </select>
+      <button id="ed-generate" class="btn primary">Generate</button>
+    </div>
+    <div id="ed-suggestions" class="suggestions"></div>
+
+    <label class="field-label">3 · Draft <span class="muted">— click any line above to drop it in</span></label>
+    <textarea id="ed-draft" rows="6" placeholder="Assemble your post here…"></textarea>
+    <div class="muted" id="ed-charcount"></div>
+
+    <div class="ed-actions">
+      <label class="sched-label">📅 Schedule: <input type="datetime-local" id="ed-schedule"></label>
+      <div class="spacer"></div>
+      <button id="ed-save" class="btn">Save</button>
+      <button id="ed-posted" class="btn success">✓ Mark posted</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

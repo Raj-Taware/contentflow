@@ -1,0 +1,31 @@
+{
+  "name": "contentflow-app",
+  "version": "1.0.0",
+  "description": "Netflix-style queue for content you want to consume, wired into a writing studio that turns it into posts for X.",
+  "bin": {
+    "contentflow": "./server.js"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "files": [
+    "server.js",
+    "public"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "content",
+    "reading-list",
+    "twitter",
+    "x",
+    "creator-tools",
+    "self-hosted"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Raj-Taware/contentflow.git"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ContentFlow — consume with intent, create with consistency</title>
+<meta name="description" content="A personal Netflix-style queue for everything you want to read or watch, wired into a writing studio that turns finished content into posts for X.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2307070d'/%3E%3Cpolygon points='24,18 48,32 24,46' fill='%23a855f7'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #07070d;
+  --panel: rgba(22,22,38,.55);
+  --line: rgba(255,255,255,.08);
+  --line-strong: rgba(255,255,255,.16);
+  --text: #f2f3fa;
+  --muted: #9298b3;
+  --grad: linear-gradient(135deg,#8b5cf6 0%,#ec4899 55%,#f97316 100%);
+  --accent: #a855f7;
+  --font-d: "Space Grotesk", sans-serif;
+  --font-b: "Inter", sans-serif;
+}
+* { box-sizing: border-box; margin: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg); color: var(--text); font-family: var(--font-b);
+  line-height: 1.6; overflow-x: hidden;
+}
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: -1;
+  background:
+    radial-gradient(700px 500px at 15% -10%, rgba(139,92,246,.25), transparent 60%),
+    radial-gradient(800px 600px at 90% 5%, rgba(236,72,153,.15), transparent 60%),
+    radial-gradient(900px 700px at 50% 115%, rgba(249,115,22,.1), transparent 60%),
+    var(--bg);
+}
+a { color: inherit; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+/* nav */
+.nav {
+  position: sticky; top: 0; z-index: 20;
+  background: rgba(7,7,13,.7); backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--line);
+}
+.nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; max-width: 1080px; margin: 0 auto; }
+.brand { font-family: var(--font-d); font-weight: 700; font-size: 20px; display: flex; align-items: center; gap: 9px; text-decoration: none; }
+.logo {
+  display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 9px;
+  background: var(--grad); color: #fff; font-size: 13px;
+  box-shadow: 0 0 18px rgba(168,85,247,.55);
+}
+.nav-links { display: flex; gap: 24px; align-items: center; font-size: 14.5px; font-weight: 500; }
+.nav-links a { color: var(--muted); text-decoration: none; transition: color .15s; }
+.nav-links a:hover { color: var(--text); }
+.btn {
+  display: inline-block; text-decoration: none; cursor: pointer;
+  background: var(--grad); color: #fff; border: none;
+  font-family: var(--font-b); font-weight: 600; font-size: 15px;
+  padding: 12px 26px; border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(168,85,247,.4);
+  transition: filter .15s, transform .15s, box-shadow .15s;
+}
+.btn:hover { filter: brightness(1.12); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(168,85,247,.55); }
+.btn.small { padding: 9px 18px; font-size: 14px; }
+.btn.outline {
+  background: none; border: 1px solid var(--line-strong); color: var(--text);
+  box-shadow: none;
+}
+.btn.outline:hover { border-color: var(--accent); box-shadow: 0 0 20px rgba(168,85,247,.2); }
+
+/* hero */
+.hero { text-align: center; padding: 110px 24px 70px; }
+.pill {
+  display: inline-block; font-size: 13px; font-weight: 600; color: #c4b5fd;
+  border: 1px solid rgba(168,85,247,.35); background: rgba(168,85,247,.08);
+  padding: 6px 16px; border-radius: 999px; margin-bottom: 28px;
+}
+h1 {
+  font-family: var(--font-d); font-size: clamp(38px, 6.5vw, 68px);
+  line-height: 1.05; letter-spacing: -2px; font-weight: 700;
+  max-width: 850px; margin: 0 auto 24px;
+}
+.grad-text {
+  background: var(--grad);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.sub { color: var(--muted); font-size: clamp(16px, 2.2vw, 19px); max-width: 620px; margin: 0 auto 36px; }
+.hero-ctas { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.hero-note { color: var(--muted); font-size: 13px; margin-top: 18px; }
+
+/* mock app window */
+.mock {
+  max-width: 880px; margin: 70px auto 0; text-align: left;
+  background: rgba(12,12,22,.85);
+  border: 1px solid var(--line-strong); border-radius: 18px;
+  box-shadow: 0 40px 120px rgba(0,0,0,.6), 0 0 80px rgba(139,92,246,.12);
+  overflow: hidden;
+  animation: float 7s ease-in-out infinite;
+}
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.mock-bar { display: flex; gap: 7px; padding: 13px 16px; border-bottom: 1px solid var(--line); }
+.dot { width: 11px; height: 11px; border-radius: 50%; background: #2a2a3d; }
+.dot:first-child { background: #ff5f57; } .dot:nth-child(2) { background: #febc2e; } .dot:nth-child(3) { background: #28c840; }
+.mock-body { padding: 22px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 13px; }
+.mock-card {
+  background: rgba(34,34,58,.45); border: 1px solid var(--line);
+  border-radius: 12px; padding: 14px; font-size: 13px;
+}
+.mock-card .t { font-family: var(--font-d); font-weight: 700; font-size: 13.5px; margin: 8px 0 6px; line-height: 1.3; }
+.mock-card .icon { font-size: 17px; }
+.mock-tag { display: inline-block; background: rgba(168,85,247,.12); color: #c4b5fd; border: 1px solid rgba(168,85,247,.2); border-radius: 5px; font-size: 10.5px; padding: 1px 7px; margin-right: 4px; }
+.mock-pill { display: inline-block; border-radius: 999px; font-size: 10px; font-weight: 700; padding: 2px 9px; margin-top: 8px; }
+.p-amber { background: rgba(251,191,36,.12); color: #fbbf24; border: 1px solid rgba(251,191,36,.25); }
+.p-green { background: rgba(52,211,153,.12); color: #34d399; border: 1px solid rgba(52,211,153,.25); }
+.p-blue { background: rgba(96,165,250,.12); color: #93c5fd; border: 1px solid rgba(96,165,250,.25); }
+
+/* sections */
+section { padding: 90px 0; }
+.kicker {
+  font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 14px;
+}
+h2 { font-family: var(--font-d); font-size: clamp(28px, 4vw, 42px); letter-spacing: -1px; line-height: 1.15; margin-bottom: 16px; }
+.lede { color: var(--muted); font-size: 17px; max-width: 560px; }
+
+.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-top: 50px; }
+.feature {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 18px;
+  backdrop-filter: blur(10px); padding: 28px;
+  transition: transform .2s, border-color .2s, box-shadow .2s;
+}
+.feature:hover {
+  transform: translateY(-4px); border-color: rgba(168,85,247,.4);
+  box-shadow: 0 16px 48px rgba(0,0,0,.4), 0 0 32px rgba(168,85,247,.1);
+}
+.feature .emoji {
+  display: inline-grid; place-items: center; width: 46px; height: 46px;
+  border-radius: 13px; background: rgba(168,85,247,.12); border: 1px solid rgba(168,85,247,.25);
+  font-size: 22px; margin-bottom: 18px;
+}
+.feature h3 { font-family: var(--font-d); font-size: 18px; margin-bottom: 8px; letter-spacing: -.3px; }
+.feature p { color: var(--muted); font-size: 14.5px; }
+
+/* steps */
+.steps { counter-reset: step; display: flex; flex-direction: column; gap: 0; margin-top: 50px; }
+.step {
+  display: flex; gap: 26px; padding: 28px 0;
+  border-bottom: 1px solid var(--line);
+}
+.step:last-child { border-bottom: none; }
+.step-num {
+  font-family: var(--font-d); font-weight: 700; font-size: 15px;
+  width: 44px; height: 44px; flex-shrink: 0;
+  display: grid; place-items: center; border-radius: 50%;
+  background: var(--grad); color: #fff;
+  box-shadow: 0 0 22px rgba(168,85,247,.4);
+}
+.step h3 { font-family: var(--font-d); font-size: 19px; margin-bottom: 6px; letter-spacing: -.3px; }
+.step p { color: var(--muted); font-size: 15px; max-width: 600px; }
+
+/* code block */
+.code {
+  background: #0c0c16; border: 1px solid var(--line-strong); border-radius: 14px;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 14.5px;
+  padding: 20px 24px; margin-top: 26px; max-width: 560px;
+  color: #c4b5fd; overflow-x: auto;
+}
+.code .c { color: #5b617a; }
+
+/* cta */
+.cta-box {
+  text-align: center; padding: 80px 32px;
+  background: var(--panel); border: 1px solid var(--line-strong);
+  border-radius: 28px; position: relative; overflow: hidden;
+}
+.cta-box::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: radial-gradient(500px 300px at 50% 120%, rgba(139,92,246,.25), transparent 70%);
+}
+
+footer { padding: 44px 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; text-align: center; }
+footer a { color: #c4b5fd; text-decoration: none; }
+
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; }
+.reveal.in { opacity: 1; transform: none; }
+
+@media (max-width: 720px) {
+  .mock-body { grid-template-columns: 1fr; }
+  .nav-links { display: none; }
+  section { padding: 60px 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#"><span class="logo">▶</span> ContentFlow</a>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="https://github.com/Raj-Taware/contentflow" class="btn small">GitHub ★</a>
+    </div>
+  </div>
+</div>
+
+<div class="hero">
+  <span class="pill">Free · Open source · Your data stays on your machine</span>
+  <h1>Stop hoarding tabs.<br>Start <span class="grad-text">shipping takes.</span></h1>
+  <p class="sub">ContentFlow is a Netflix-style queue for everything you want to read or watch — wired straight into a writing studio that turns what you consumed into posts for X.</p>
+  <div class="hero-ctas">
+    <a class="btn" href="https://github.com/Raj-Taware/contentflow">Get ContentFlow →</a>
+    <a class="btn outline" href="#how">See how it works</a>
+  </div>
+  <div class="hero-note">One command. Zero dependencies. Works on your phone too.</div>
+
+  <div class="mock">
+    <div class="mock-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    <div class="mock-body">
+      <div class="mock-card">
+        <span class="icon">🔬</span> <span style="float:right;color:#5b617a;font-size:11px">2d ago</span>
+        <div class="t">Attention Is All You Need</div>
+        <span class="mock-tag">transformers</span><span class="mock-tag">ml</span>
+        <div class="mock-pill p-green">scheduled</div>
+      </div>
+      <div class="mock-card">
+        <span class="icon">🎬</span> <span style="float:right;color:#5b617a;font-size:11px">5d ago</span>
+        <div class="t">Intro to LLMs — Karpathy</div>
+        <span class="mock-tag">ai</span>
+        <div class="mock-pill p-amber">no draft yet</div>
+      </div>
+      <div class="mock-card">
+        <span class="icon">📄</span> <span style="float:right;color:#5b617a;font-size:11px">today</span>
+        <div class="t">The Bitter Lesson</div>
+        <span class="mock-tag">essays</span>
+        <div class="mock-pill p-blue">draft in progress</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section id="how">
+  <div class="wrap">
+    <div class="kicker reveal">The loop</div>
+    <h2 class="reveal">Consume → think → publish.<br>On repeat.</h2>
+    <p class="lede reveal">Most people consume great content and let it evaporate. ContentFlow closes the loop between what goes into your head and what comes out of your keyboard.</p>
+
+    <div class="steps">
+      <div class="step reveal">
+        <div class="step-num">1</div>
+        <div><h3>Queue everything</h3>
+        <p>Papers, videos, threads, podcasts, books. Add from your laptop or phone in two seconds — title, link, tags, priority. Your queue, sorted by what matters most.</p></div>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">2</div>
+        <div><h3>Mark it done — it moves to the Studio</h3>
+        <p>Finished something? One click and it lands in your writing pipeline. Nothing you consume gets to silently disappear anymore.</p></div>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">3</div>
+        <div><h3>Dump thoughts, get connectors</h3>
+        <p>Write your raw takes. Pick an angle — contrarian, story, question, listicle — and get hooks, bridges and closers built from <em>your own words</em>. It never writes the post for you. Your voice stays yours.</p></div>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">4</div>
+        <div><h3>Schedule it. Or get nagged.</h3>
+        <p>Set a date for every draft. And if you finished something three days ago without writing a word about it — ContentFlow reminds you. Consistency, enforced.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <div class="kicker reveal">Why it's different</div>
+    <h2 class="reveal">Built for people who'd rather<br><span class="grad-text">own their pipeline.</span></h2>
+    <div class="features">
+      <div class="feature reveal">
+        <span class="emoji">🍿</span>
+        <h3>Netflix for your reading list</h3>
+        <p>A visual queue with type filters, tags, search and priority. Adding something takes less time than losing the tab.</p>
+      </div>
+      <div class="feature reveal">
+        <span class="emoji">✍️</span>
+        <h3>Connectors, not ghostwriting</h3>
+        <p>Hooks, bridges and closers generated from your thoughts. The marketing scaffolding — without outsourcing your voice to a bot.</p>
+      </div>
+      <div class="feature reveal">
+        <span class="emoji">⏰</span>
+        <h3>Anti-procrastination built in</h3>
+        <p>"You read this 5 days ago and wrote nothing." The reminder you need, exactly when you need it.</p>
+      </div>
+      <div class="feature reveal">
+        <span class="emoji">📱</span>
+        <h3>Phone + laptop</h3>
+        <p>Runs on your machine, reachable from your phone on the same wifi. Add to home screen and it feels like a native app.</p>
+      </div>
+      <div class="feature reveal">
+        <span class="emoji">🔒</span>
+        <h3>Your data, one JSON file</h3>
+        <p>No accounts, no cloud, no tracking. Everything lives in a single file you can read, back up or edit by hand.</p>
+      </div>
+      <div class="feature reveal">
+        <span class="emoji">⚡</span>
+        <h3>Zero dependencies</h3>
+        <p>Plain Node.js standard library and vanilla JavaScript. Nothing to install, nothing to break, nothing to audit.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker reveal">Get started</div>
+    <h2 class="reveal">Running in 30 seconds.</h2>
+    <div class="code reveal">
+      <span class="c"># clone it</span><br>
+      git clone https://github.com/Raj-Taware/contentflow.git<br><br>
+      <span class="c"># run it (Node 18+, no npm install needed)</span><br>
+      cd contentflow && node server.js<br><br>
+      <span class="c"># open http://localhost:4321 — done</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="cta-box reveal">
+      <h2>Your future audience is waiting<br>for your <span class="grad-text">next take.</span></h2>
+      <p class="lede" style="margin: 0 auto 32px;">Free forever. Open source. Five files of code you can actually read.</p>
+      <a class="btn" href="https://github.com/Raj-Taware/contentflow">Star it on GitHub →</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  ContentFlow · MIT License · <a href="https://github.com/Raj-Taware/contentflow">GitHub</a>
+</footer>
+
+<script>
+const io = new IntersectionObserver((entries) => {
+  for (const e of entries) if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+</script>
+</body>
+</html>
