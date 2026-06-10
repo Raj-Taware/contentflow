@@ -6,8 +6,16 @@ const path = require('path');
 const os = require('os');
 
 const PORT = process.env.PORT || 4321;
+// Bind localhost by default. Set LAN=1 to expose on the network (e.g. for phone access).
+const HOST = process.env.LAN ? '0.0.0.0' : '127.0.0.1';
 const ROOT = path.join(__dirname, 'public');
 const DATA_FILE = path.join(__dirname, 'data.json');
+
+// Only http(s) links are allowed in item.url — blocks javascript:/data: XSS vectors.
+function safeUrl(u) {
+  const s = (u || '').trim();
+  return /^https?:\/\//i.test(s) ? s : '';
+}
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -55,7 +63,24 @@ function readBody(req) {
   });
 }
 
+// Allowed Host values: localhost, loopback, and any of this machine's LAN IPs.
+// Blocks DNS-rebinding attacks that try to reach the API via an attacker-controlled domain.
+function allowedHosts() {
+  const hosts = new Set(['localhost', '127.0.0.1']);
+  for (const list of Object.values(os.networkInterfaces())) {
+    for (const n of list || []) if (n.family === 'IPv4') hosts.add(n.address);
+  }
+  return hosts;
+}
+const ALLOWED_HOSTS = allowedHosts();
+
 const server = http.createServer(async (req, res) => {
+  const hostname = (req.headers.host || '').split(':')[0];
+  if (!ALLOWED_HOSTS.has(hostname)) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    return res.end('forbidden host');
+  }
+
   const url = new URL(req.url, `http://${req.headers.host}`);
 
   // API
@@ -69,7 +94,7 @@ const server = http.createServer(async (req, res) => {
         const item = {
           id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
           title: (body.title || '').trim(),
-          url: (body.url || '').trim(),
+          url: safeUrl(body.url),
           type: body.type || 'article',
           tags: Array.isArray(body.tags) ? body.tags : [],
           priority: body.priority || 'normal',
@@ -95,6 +120,7 @@ const server = http.createServer(async (req, res) => {
           const allowed = ['title', 'url', 'type', 'tags', 'priority', 'status',
             'doneAt', 'thoughts', 'draft', 'scheduledFor', 'postedAt'];
           for (const k of allowed) if (k in body) item[k] = body[k];
+          if ('url' in body) item.url = safeUrl(body.url);
           save();
           return sendJSON(res, 200, item);
         }
@@ -114,7 +140,7 @@ const server = http.createServer(async (req, res) => {
   let file = url.pathname === '/' ? '/index.html' : url.pathname;
   file = path.normalize(file).replace(/^(\.\.[/\\])+/, '');
   const full = path.join(ROOT, file);
-  if (!full.startsWith(ROOT)) { res.writeHead(403); return res.end(); }
+  if (full !== ROOT && !full.startsWith(ROOT + path.sep)) { res.writeHead(403); return res.end(); }
   fs.readFile(full, (err, buf) => {
     if (err) { res.writeHead(404); return res.end('not found'); }
     res.writeHead(200, { 'Content-Type': MIME[path.extname(full)] || 'application/octet-stream' });

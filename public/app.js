@@ -48,6 +48,10 @@ function esc(s) {
   div.textContent = s;
   return div.innerHTML;
 }
+// Only render http(s) links — defense in depth against javascript:/data: URLs.
+function safeHref(u) {
+  return /^https?:\/\//i.test((u || '').trim()) ? esc(u) : '';
+}
 function priorityRank(p) { return p === 'high' ? 0 : p === 'normal' ? 1 : 2; }
 
 /* ---------------- Render ---------------- */
@@ -86,8 +90,8 @@ function renderQueue() {
         <span class="card-type">${TYPE_ICON[i.type] || '📄'}</span>
         <span class="card-age">${agoLabel(i.addedAt)}</span>
       </div>
-      <div class="card-title">${i.url
-        ? `<a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.title)} ↗</a>`
+      <div class="card-title">${safeHref(i.url)
+        ? `<a href="${safeHref(i.url)}" target="_blank" rel="noopener">${esc(i.title)} ↗</a>`
         : esc(i.title)}</div>
       ${i.tags.length ? `<div class="card-tags">${i.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
       <div class="card-actions">

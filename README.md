@@ -20,7 +20,16 @@ Open **http://localhost:4321**. That's it — no `npm install`, no database, no 
 
 ### Use it from your phone
 
-The server prints a `Phone: http://192.168.x.x:4321` line on startup. Open that URL on your phone (same wifi), then **Add to Home Screen** — it installs like a native app.
+By default ContentFlow binds to `localhost` only (safe default). To reach it from your phone, start it in LAN mode:
+
+```bash
+LAN=1 node server.js          # macOS / Linux
+$env:LAN=1; node server.js    # Windows PowerShell
+```
+
+The server then prints a `Phone: http://192.168.x.x:4321` line. Open that URL on your phone (same wifi), then **Add to Home Screen** — it installs like a native app.
+
+> ⚠️ **Only enable `LAN=1` on networks you trust.** In LAN mode the app has no password — anyone on the same wifi can read and edit your queue. On a coffee-shop or office network, leave it on the default localhost-only mode.
 
 ## How to use it
 
